@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using AtleticusAPI.Data;
+using AtleticusAPI.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,17 +8,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-        .AddJwtBearer(options => {
-            options.TokenValidationParameters = new TokenValidationParameters {
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"])),
-                ValidateIssuer = true,
-                ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-                ValidateAudience = true,
-                ValidAudiences = builder.Configuration.GetSection("JwtSettings:ValidAudiences").Get<string[]>(),
-            };
-        });
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddJwtBearerAuthentication(builder.Configuration);
 
 var app = builder.Build();
 
